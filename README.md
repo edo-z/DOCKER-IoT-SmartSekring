@@ -3,8 +3,6 @@
 
 Sistem monitoring daya listrik **berbasis ESP8266**, **MQTT**, dan **dashboard web responsif** menggunakan **Chart.js**, **Node.js**, dan **MySQL**. Data realtime dari sensor arus (ACS712) dan tegangan (ZMPT101B) dikirim via MQTT ke server dan divisualisasikan dalam bentuk grafik & tabel historis.
 
-![Screenshot Dashboard](screenshot.png)
-
 ---
 
 ## 🚀 Fitur Utama
