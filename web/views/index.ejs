@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Smart Sekering</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @media print {
+
+      button,
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      table {
+        page-break-inside: auto;
+      }
+
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+    }
+  </style>
+
+</head>
+
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-blue-900 text-white p-4">
+      <h2 class="text-2xl font-bold mb-6">SMART SEKERING</h2>
+      <ul>
+        <li class="py-2 px-2 bg-blue-700 rounded">Dashboard</li>
+      </ul>
+
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 p-6">
+      <h1 class="text-3xl font-bold mb-4">Dashboard</h1>
+
+      <!-- Info Cards -->
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-sm text-gray-500">Tegangan (V)</h3>
+          <canvas id="chartV" class="bg-white p-2 rounded shadow-md"></canvas>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-sm text-gray-500">Arus (A)</h3>
+          <canvas id="chartI" class="bg-white p-2 rounded shadow-md"></canvas>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-sm text-gray-500">Daya (W)</h3>
+          <canvas id="chartW" class="bg-white p-2 rounded shadow-md"></canvas>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-sm text-gray-500">Energi (kWh)</h3>
+          <canvas id="chartK" class="bg-white p-2 rounded shadow-md"></canvas>
+        </div>
+      </div>
+
+      <!-- Main Chart -->
+      <div class="bg-white p-6 rounded shadow">
+        <div class="flex justify-between mb-2">
+          <h2 class="text-lg font-semibold">Total Biaya (kWh)</h2>
+          <!-- Trigger Button -->
+          <button onclick="openExportModal()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            📤 Export
+          </button>
+          <button onclick="clearData()" class="mb-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+            Hapus Semua Data
+          </button>
+        </div>
+        <canvas id="mainChart" height="100"></canvas>
+      </div>
+      <!-- Table Data -->
+      <div class="mt-6 overflow-x-auto">
+        <table class="min-w-full bg-white shadow rounded">
+          <thead class="bg-blue-600 text-white">
+            <tr>
+              <th class="px-4 py-2">Waktu</th>
+              <th class="px-4 py-2">Tegangan (V)</th>
+              <th class="px-4 py-2">Arus (A)</th>
+              <th class="px-4 py-2">Daya (W)</th>
+              <th class="px-4 py-2">Energi (kWh)</th>
+              <th class="px-4 py-2">Biaya (Rp)</th>
+            </tr>
+          </thead>
+          <tbody id="data-table-body" class="text-center">
+            <!-- Baris data akan diisi dengan JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Toast Container -->
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg hidden z-50">
+      ✅ Data berhasil dihapus!
+    </div>
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden z-50">
+      <div class="bg-white p-6 rounded shadow-lg w-80">
+        <h2 class="text-lg font-semibold mb-4">Pilih Jenis Export</h2>
+        <div class="space-y-3">
+          <button onclick="exportCSV()" class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            ⬇️ Export CSV
+          </button>
+          <button onclick="printPDF()" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            🖨️ Export PDF
+          </button>
+        </div>
+        <button onclick="closeExportModal()" class="mt-4 text-sm text-gray-500 hover:text-red-500">Batal</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function openExportModal() {
+      document.getElementById('exportModal').classList.remove('hidden');
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.add('hidden');
+    }
+
+    function exportCSV() {
+      window.location.href = '/api/export';
+      closeExportModal();
+    }
+
+    function printPDF() {
+      closeExportModal();
+      window.print();
+    }
+  </script>
+
+
+  <script>
+    async function clearData() {
+      if (!confirm("Yakin ingin menghapus semua data?")) return;
+
+      try {
+        const res = await fetch('/api/clear', {
+          method: 'POST'
+        });
+
+        if (res.ok) {
+          showToast("✅ Data berhasil dihapus!");
+          loadData(); // refresh grafik & tabel
+        } else {
+          showToast("❌ Gagal menghapus data", true);
+        }
+      } catch (err) {
+        showToast("❌ Terjadi kesalahan", true);
+      }
+    }
+
+    function showToast(msg, error = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.remove('bg-green-500', 'bg-red-500');
+      toast.classList.add(error ? 'bg-red-500' : 'bg-green-500');
+
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+  </script>
+
+
+  <script>
+    let charts = {};
+
+    async function loadData() {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+
+      const waktu = data.map(d => new Date(d.waktu).toLocaleTimeString());
+      const tegangan = data.map(d => d.tegangan);
+      const arus = data.map(d => d.arus);
+      const daya = data.map(d => d.daya);
+      const energi = data.map(d => d.kwh);
+      const biaya = data.map(d => d.biaya);
+
+      const config = (label, data, color, type = 'line') => ({
+        type: type,
+        data: {
+          labels: waktu,
+          datasets: [{ label, data, borderColor: color, backgroundColor: color, fill: false }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: type !== 'line' } },
+          scales: {
+            x: {
+              ticks: { color: '#666', font: { size: 10 } },
+              title: { display: true, text: 'Waktu', color: '#333', font: { size: 12 } }
+            },
+            y: {
+              ticks: { color: '#666', font: { size: 10 } },
+              title: { display: true, text: label, color: '#333', font: { size: 12 } }
+            }
+          }
+
+        }
+      });
+
+      const mainConfig = {
+        type: 'line',
+        data: {
+          labels: waktu,
+          datasets: [{ label: 'Biaya (Rp)', data: biaya, backgroundColor: 'rgba(99,102,241,0.6)' }]
+        }
+      };
+
+      if (!charts.v) {
+        charts.v = new Chart(document.getElementById('chartV'), config('Tegangan (V)', tegangan, 'rgba(59,130,246,1)'));   // biru
+        charts.i = new Chart(document.getElementById('chartI'), config('Arus (A)', arus, 'rgba(16,185,129,1)'));           // hijau
+        charts.w = new Chart(document.getElementById('chartW'), config('Daya (W)', daya, 'rgba(239,68,68,1)'));            // merah
+        charts.k = new Chart(document.getElementById('chartK'), config('Energi (kWh)', energi, 'rgba(251,191,36,1)'));     // kuning
+        charts.main = new Chart(document.getElementById('mainChart'), mainConfig);
+      } else {
+        charts.v.data.labels = waktu;
+        charts.v.data.datasets[0].data = tegangan;
+        charts.v.update();
+
+        charts.i.data.labels = waktu;
+        charts.i.data.datasets[0].data = arus;
+        charts.i.update();
+
+        charts.w.data.labels = waktu;
+        charts.w.data.datasets[0].data = daya;
+        charts.w.update();
+
+        charts.k.data.labels = waktu;
+        charts.k.data.datasets[0].data = energi;
+        charts.k.update();
+
+        charts.main.data.labels = waktu;
+        charts.main.data.datasets[0].data = biaya;
+        charts.main.update();
+      }
+      // Isi tabel
+      const tbody = document.getElementById("data-table-body");
+      tbody.innerHTML = ''; // Kosongkan sebelum isi ulang
+      data.forEach(d => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+    <td class="px-4 py-2 border">${new Date(d.waktu).toLocaleString()}</td>
+    <td class="px-4 py-2 border">${d.tegangan.toFixed(2)}</td>
+    <td class="px-4 py-2 border">${d.arus.toFixed(2)}</td>
+    <td class="px-4 py-2 border">${d.daya.toFixed(2)}</td>
+    <td class="px-4 py-2 border">${d.kwh.toFixed(4)}</td>
+    <td class="px-4 py-2 border">Rp ${d.biaya.toFixed(2)}</td>
+  `;
+        tbody.appendChild(row);
+      });
+
+    }
+
+    loadData();
+    setInterval(loadData, 1000); // Fetch data tiap 5 detik
+  </script>
+
+</body>
+
+</html>
