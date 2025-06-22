@@ -36,17 +36,34 @@
 <body class="bg-gray-100">
   <div class="flex min-h-screen">
     <!-- Sidebar -->
-    <div class="w-64 bg-blue-900 text-white p-4">
+    <!-- <div class="w-64 bg-blue-900 text-white p-4">
       <h2 class="text-2xl font-bold mb-6">SMART SEKERING</h2>
       <ul>
         <li class="py-2 px-2 bg-blue-700 rounded">Dashboard</li>
       </ul>
 
-    </div>
+    </div> -->
 
     <!-- Main content -->
     <div class="flex-1 p-6">
-      <h1 class="text-3xl font-bold mb-4">Dashboard</h1>
+
+      <div class="flex justify-between">
+        <div class="order-first">
+          <h1 class="text-3xl font-bold mb-4">Dashboard</h1>
+        </div>
+        <div class="..."></div>
+        <div class="order-last">
+          <button onclick="openExportModal()" class="mb-4 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700">
+            Export
+          </button>
+          <button onclick="clearData()" class="mb-4 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700">
+            Hapus Semua Data
+          </button>
+        </div>
+
+
+      </div>
+
 
       <!-- Info Cards -->
       <div class="grid grid-cols-4 gap-4 mb-6">
@@ -72,13 +89,6 @@
       <div class="bg-white p-6 rounded shadow">
         <div class="flex justify-between mb-2">
           <h2 class="text-lg font-semibold">Total Biaya (kWh)</h2>
-          <!-- Trigger Button -->
-          <button onclick="openExportModal()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            📤 Export
-          </button>
-          <button onclick="clearData()" class="mb-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
-            Hapus Semua Data
-          </button>
         </div>
         <canvas id="mainChart" height="100"></canvas>
       </div>
@@ -258,9 +268,9 @@
         row.innerHTML = `
     <td class="px-4 py-2 border">${new Date(d.waktu).toLocaleString()}</td>
     <td class="px-4 py-2 border">${d.tegangan.toFixed(2)}</td>
-    <td class="px-4 py-2 border">${d.arus.toFixed(2)}</td>
+    <td class="px-4 py-2 border">${d.arus.toFixed(5)}</td>
     <td class="px-4 py-2 border">${d.daya.toFixed(2)}</td>
-    <td class="px-4 py-2 border">${d.kwh.toFixed(4)}</td>
+    <td class="px-4 py-2 border">${d.kwh.toFixed(5)}</td>
     <td class="px-4 py-2 border">Rp ${d.biaya.toFixed(2)}</td>
   `;
         tbody.appendChild(row);
