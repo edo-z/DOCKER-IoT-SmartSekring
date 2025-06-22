@@ -4,5 +4,8 @@ node_modules/
 .DS_Store
 *.sqlite
 *.bak
+<<<<<<< HEAD
 id_ed25519*
 index.html
+=======
+>>>>>>> 8de9ccb3f011ee99e74fed8f59fbeccd21f986e3
